@@ -266,7 +266,7 @@ const createPipeline = function createPipeline(W, H) {
     const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1);
     return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
   };
-  fx('flow', true, { scale: .015, speed: 1.5 }, 'Advects the page along a curl-noise field, like marbled paper.', p => {
+  fx('flow', true, { scale: .015, speed: 3 }, 'Advects the page along a curl-noise field, like marbled paper.', p => {
     snap();
     const s = p.scale, z = t * .05, k = p.speed / (2 * s);
     const n = (x, y) => vn(x * s + z, y * s - z);
@@ -375,6 +375,7 @@ const createPipeline = function createPipeline(W, H) {
   fx('cascade', false, { rule: 90 }, 'Elementary automaton: each row under the cursor is computed from the row above it. Try rule 30 or 110.', p => {
     const rule = clamp(Math.round(p.rule), 0, 255);
     const [x0, y0, x1, y1] = lbox();
+    setc(sm(P.x, P.y), INK);
     for (let y = Math.max(y0, Math.floor(P.y) + 1, 1); y < y1; y++) for (let x = x0; x < x1; x++) {
       if (!inL(x, y)) continue;
       const l = dk(lum(sm(x - 1, y - 1))) < 128 ? 4 : 0, c = dk(lum(sm(x, y - 1))) < 128 ? 2 : 0, r = dk(lum(sm(x + 1, y - 1))) < 128 ? 1 : 0;
@@ -719,10 +720,10 @@ const createPipeline = function createPipeline(W, H) {
     const s = [2, 4, 8, 16][Math.random() * 4 | 0];
     cells(s, (x0, y0, ex, ey) => { if (Math.random() < p.rate) fill(x0, y0, ex, ey, avg(x0, y0, ex, ey)); });
   });
-  fx('stamp', true, { hold: 20 }, 'Hold still to pick up what is under the lens, then move to print it in a trail.', p => {
+  fx('stamp', true, { hold: 20 }, 'Picks up what is under the lens and prints it in a trail as you move. Hold still to pick up something new.', p => {
     const s = st('stamp', () => ({ still: 0, patch: null, lx: -1e9, ly: -1e9 }));
-    if (P.speed < .25) {
-      if (++s.still === Math.max(2, Math.round(p.hold))) {
+    if (P.speed < .25 || !s.patch) {
+      if (++s.still === Math.max(2, Math.round(p.hold)) || !s.patch) {
         const [x0, y0, x1, y1] = lbox(), w = x1 - x0, h = y1 - y0, a = new Uint8ClampedArray(w * h * 4), m = new Uint8Array(w * h);
         for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
           const k = y * w + x, i = idx(x0 + x, y0 + y);
@@ -846,8 +847,8 @@ const createPipeline = function createPipeline(W, H) {
     const s = p.scale, th = .5 + .25 * Math.sin(t * p.speed);
     lens((i, x, y) => {
       const n = vn(x * s + t * p.speed, y * s);
-      if (Math.abs(n - th) < .015) setc(i, INK);
-      else if (n > th) setc(i, PAPER);
+      if (Math.abs(n - th) < .035) setc(i, INK);
+      else if (n > th) setc(i, tint(.08));
     });
   });
   /* ---- more from the others ---- */
@@ -910,8 +911,16 @@ const createPipeline = function createPipeline(W, H) {
     const gw = g.gw;
     touch(g, 2);
     eachCell(g, (k, x, y) => { if (g.a[k] === 0 && inkAt(g, x, y)) g.a[k] = 3; });
-    const wires = [];
+    let wires = [];
     lensCells(g, k => { if (g.a[k] === 3) wires.push(k); });
+    if (wires.length < 20) {
+      const cx = P.x / G, cy = P.y / G, rr = rad() / G * .55;
+      for (let a = 0; a < TAU; a += .5 / rr) for (const r2 of [rr, rr * .6]) {
+        const x = Math.round(cx + Math.cos(a) * r2), y = Math.round(cy + Math.sin(a) * r2);
+        if (x > 0 && y > 0 && x < gw - 1 && y < g.gh - 1 && !g.a[y * gw + x]) g.a[y * gw + x] = 3;
+      }
+      wires = []; lensCells(g, k => { if (g.a[k] === 3) wires.push(k); });
+    }
     for (let s = 0; s < p.sparks && wires.length; s++) g.a[wires[Math.random() * wires.length | 0]] = 1;
     eachCell(g, k => {
       const a = g.a, v = a[k];
@@ -1200,7 +1209,7 @@ const createPipeline = function createPipeline(W, H) {
     s.bolt.forEach((pts, b) => {
       for (let k = 1; k < pts.length; k++) {
         const [ax, ay] = pts[k - 1], [bx, by] = pts[k], n = Math.ceil(Math.hypot(bx - ax, by - ay)) || 1;
-        for (let q = 0; q <= n; q++) { const x = ax + (bx - ax) * q / n, y = ay + (by - ay) * q / n; setc(sm(x, y), INK); if (!b) setc(sm(x + 1, y), INK); }
+        for (let q = 0; q <= n; q++) { const x = ax + (bx - ax) * q / n, y = ay + (by - ay) * q / n; setc(sm(x, y), INK); setc(sm(x + 1, y), INK); if (!b) { setc(sm(x, y + 1), INK); setc(sm(x + 1, y + 1), INK); } }
       }
     });
   });
@@ -1290,31 +1299,50 @@ const createPipeline = function createPipeline(W, H) {
     }
     s.sp = s.sp.filter(q => q.life > 0 && q.x > 0 && q.y > 0 && q.x < W && q.y < H).slice(-1500);
   });
-  fx('hive', false, { size: 7, rate: 6 }, 'Hexagonal comb grows outward from the ink, one cell at a time, wherever you hover.', p => {
-    const sz = Math.max(3, p.size), R3 = Math.sqrt(3);
-    const s = st('hive' + sz, () => ({ built: new Set(), front: [] }));
+  fx('hive', false, { size: 7, rate: 6, life: 9 }, 'A comb that is never finished: cells are built, fill up with honey, get capped, then crumble and are rebuilt. --life is roughly how many seconds a cell lasts.', p => {
+    const sz = Math.max(3, p.size), R3 = Math.sqrt(3), lifeF = Math.max(1, p.life) * 60;
+    const s = st('hive' + sz, () => ({ cells: new Map(), front: [] }));
     const center = (q, r) => [sz * R3 * (q + r / 2), sz * 1.5 * r];
     const toHex = (x, y) => { const r = Math.round(y / (sz * 1.5)); return [Math.round(x / (sz * R3) - r / 2), r]; };
+    const N6 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, -1], [-1, 1]];
     const build = (q, r) => {
       const key = q + ',' + r;
-      if (s.built.has(key)) return;
-      s.built.add(key); s.front.push([q, r]);
-      const [cx, cy] = center(q, r);
-      for (let c = 0; c < 6; c++) {
-        const a1 = Math.PI / 6 + c * Math.PI / 3, a2 = a1 + Math.PI / 3;
-        line(cx + Math.cos(a1) * sz, cy + Math.sin(a1) * sz, cx + Math.cos(a2) * sz, cy + Math.sin(a2) * sz, INK, .9);
-      }
+      if (s.cells.has(key)) return;
+      s.cells.set(key, { q, r, born: fr, life: lifeF * (.5 + Math.random()) });
+      s.front.push([q, r]);
     };
+    // seeds: ink under the lens, or the cursor itself
     for (let k = 0; k < 2; k++) { const at = pick(inkPx, 120); if (at) build(...toHex(at[0], at[1])); }
-    if (!s.front.length) build(...toHex(P.x, P.y));
-    const N6 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, -1], [-1, 1]];
+    if (s.front.length < 4) build(...toHex(P.x + (Math.random() - .5) * rad(), P.y + (Math.random() - .5) * rad()));
+    // growth along the edge of the comb
     for (let k = 0; k < p.rate * 3 && s.front.length; k++) {
       const ix = Math.random() * s.front.length | 0, [q, r] = s.front[ix], [dq, dr] = N6[Math.random() * 6 | 0];
       const [cx, cy] = center(q + dq, r + dr);
       if (cx < 0 || cy < 0 || cx >= W || cy >= H || Math.hypot(cx - P.x, cy - P.y) > rad() * 1.3) { if (Math.random() < .1) s.front.splice(ix, 1); continue; }
-      if (!s.built.has((q + dq) + ',' + (r + dr))) build(q + dq, r + dr); else if (Math.random() < .2) s.front.splice(ix, 1);
+      if (!s.cells.has((q + dq) + ',' + (r + dr))) build(q + dq, r + dr); else if (Math.random() < .2) s.front.splice(ix, 1);
     }
-    if (s.built.size > 40000) { s.built.clear(); s.front.length = 0; }
+    if (s.front.length > 4000) s.front.splice(0, 2000);
+    // draw and age the cells under the lens: empty, filling, capped, crumbling
+    const [bx0, by0, bx1, by1] = lbox(), hw = sz * R3 / 2;
+    for (let r = Math.floor(by0 / (sz * 1.5)) - 1; r <= Math.ceil(by1 / (sz * 1.5)) + 1; r++)
+      for (let q = Math.floor(bx0 / (sz * R3) - r / 2) - 1; q <= Math.ceil(bx1 / (sz * R3) - r / 2) + 1; q++) {
+        const key = q + ',' + r, c = s.cells.get(key);
+        if (!c) continue;
+        const age = (fr - c.born) / c.life;
+        if (age >= 1) { s.cells.delete(key); for (const [dq, dr] of N6) if (s.cells.has((q + dq) + ',' + (r + dr))) s.front.push([q + dq, r + dr]); continue; }
+        const [cx, cy] = center(q, r);
+        if (!inL(cx, cy)) continue;
+        const fill = age < .7 ? age / .7 * .45 : age < .85 ? .75 : .2, crumble = age > .85 ? (age - .85) / .15 : 0;
+        for (let y = Math.floor(cy - sz); y <= Math.ceil(cy + sz); y++) for (let x = Math.floor(cx - hw); x <= Math.ceil(cx + hw); x++) {
+          const dx = Math.abs(x - cx), dy = Math.abs(y - cy);
+          if (dx > hw || dy > sz - dx / R3) continue;
+          const edge = dx > hw - 1 || dy > sz - dx / R3 - 1;
+          if (crumble && Math.random() < crumble) continue;
+          const i = sm(x, y);
+          if (edge) setc(i, INK); else mixc(i, INK, fill);
+        }
+      }
+    if (s.cells.size > 40000) { s.cells.clear(); s.front.length = 0; }
   });
   fx('fireflies', false, { count: 80, sync: .06 }, 'Fireflies drift over the page and blink. Each flash nudges its neighbours until they fall into step.', p => {
     const s = st('ff', () => ({ f: [] }));
@@ -1387,13 +1415,13 @@ const createPipeline = function createPipeline(W, H) {
     }
     hist.i = (hist.i + 1) % hist.n;
   }
-  fx('rewind', false, { seconds: 8 }, 'The lens shows the page as it was a few seconds ago. It starts remembering the first time you use it.', p => {
+  fx('rewind', false, { seconds: 8 }, 'The lens shows the page as it was a few seconds ago. Stack it with something that changes the page; on a still page there is nothing to rewind.', p => {
     hist.on = true;
     const back = clamp(Math.round(p.seconds * 60 / 25), 1, hist.n - 1), slot = hist.slots[(hist.i - back + hist.n * 4) % hist.n];
     if (!slot) return;
     lens((i, x, y) => { const j = ((y >> 1) * hist.w + (x >> 1)) * 3; buf[i] = slot[j]; buf[i + 1] = slot[j + 1]; buf[i + 2] = slot[j + 2]; });
   });
-  fx('exposure', false, { decay: .985 }, 'A long exposure: the lens keeps everything that has moved under it, like a shutter left open. Put it after something that moves.', p => {
+  fx('exposure', false, { decay: .985 }, 'A long exposure: the lens keeps everything that has moved under it, like a shutter left open. Stack it after something that moves, like flock or worms.', p => {
     const s = st('expo', () => ({ a: new Float32Array(N) }));
     lens(i => {
       const k = i >> 2, v = Math.max(s.a[k] * p.decay, 1 - dk(lum(i)) / 255);
