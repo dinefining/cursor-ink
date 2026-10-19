@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Petri, basic example</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #e9e7e1; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<canvas id="out"></canvas>
+<script type="module">
+import pipeline from '../petri.js'
+
+// the page the effects work on: any canvas, image or video
+const out = document.getElementById('out')
+const w = out.width = innerWidth, h = out.height = innerHeight
+const page = document.createElement('canvas')
+page.width = w; page.height = h
+const g = page.getContext('2d')
+g.fillStyle = '#e9e7e1'; g.fillRect(0, 0, w, h)
+g.fillStyle = '#2b2a28'; g.font = `${Math.round(h / 4)}px Georgia, serif`
+g.fillText('hello', w * .1, h * .6)
+
+const recipe = await (await fetch('garden.css')).text()
+const fx = pipeline(out, recipe, { freeze: true })
+
+let x = null, y = null
+addEventListener('pointermove', e => { x = e.clientX; y = e.clientY })
+fx.frame(page)
+;(function loop() { fx.frame(null, { x, y }); requestAnimationFrame(loop) })()
+</script>
+</body>
+</html>

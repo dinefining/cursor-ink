@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Petri: a growing lab of living effects. Hover to borrow one, click to stack them, invent your own.">
+<title>Petri</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Newsreader:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<canvas id="c" aria-label="Effect grid"></canvas>
+<div id="ring" hidden></div>
+<div id="ring2" hidden></div>
+<div id="hold" hidden></div>
+<button id="corner" class="x" type="button" aria-label="Open controls" aria-expanded="false"><span class="burger" aria-hidden="true"></span></button>
+<nav id="view" aria-label="Controls" hidden>
+  <div class="seg" role="group" aria-label="Read and edit">
+    <button type="button" data-v="info" aria-pressed="false">info<span class="key">i</span></button>
+    <button type="button" data-v="css" aria-pressed="false">css<span class="key">c</span></button>
+  </div>
+  <div class="seg" role="group" aria-label="View">
+    <button type="button" data-v="lines" aria-pressed="false">grid<span class="key">g</span></button>
+    <button type="button" data-v="labels" aria-pressed="false">labels<span class="key">b</span></button>
+    <button type="button" data-v="theme" id="themeBtn">light<span class="key">l / d</span></button>
+  </div>
+  <div class="seg" role="group" aria-label="Lens">
+    <button type="button" data-v="solo" aria-pressed="false">solo<span class="key">s</span></button>
+    <button type="button" data-v="freeze" aria-pressed="false">freeze<span class="key">f</span></button>
+    <div class="row">size<span class="pm"><button type="button" data-v="smaller" aria-label="Smaller lens">-</button><button type="button" data-v="bigger" aria-label="Bigger lens">+</button></span></div>
+  </div>
+  <div class="seg" role="group" aria-label="Page">
+    <button type="button" data-v="write" aria-pressed="false">text<span class="key">t</span></button>
+    <button type="button" data-v="image" aria-pressed="false">image<span class="key">m</span></button>
+    <button type="button" data-v="video" aria-pressed="false">video<span class="key">v</span></button>
+  </div>
+  <div class="seg" role="group" aria-label="Make">
+    <button type="button" data-v="new" aria-pressed="false">new<span class="key">n</span></button>
+    <button type="button" data-v="reset">reset<span class="key">r</span></button>
+  </div>
+</nav>
+<aside id="panel" class="dock" hidden aria-label="Recipe">
+  <header>
+    <div class="top"><strong id="ptitle">cursor.css</strong><button id="close" type="button" hidden></button></div>
+    <nav class="index" aria-label="Recipe actions">
+      <button id="save" type="button" class="primary" hidden>save</button>
+      <button id="cancel" type="button" hidden>cancel</button>
+      <button id="adv" type="button" aria-pressed="false">advanced</button>
+      <button id="lock" type="button">save</button>
+      <button id="export" type="button">export</button>
+      <button id="exModule" type="button" hidden>module</button>
+      <button id="exRecipe" type="button" hidden>recipe</button>
+      <button id="exEmbed" type="button" hidden>embed</button>
+      <button id="copy" type="button" hidden>copy</button>
+    </nav>
+  </header>
+  <textarea id="css" spellcheck="false" autocomplete="off" aria-label="Recipe"></textarea>
+  <div id="status" class="foot" hidden></div>
+</aside>
+<aside id="info" class="dock" hidden aria-label="Info">
+  <header>
+    <div class="top"><strong>info</strong><button id="wikiClose" type="button" hidden></button></div>
+    <nav class="index" id="wnav" aria-label="Sections"></nav>
+  </header>
+  <div id="wbody"></div>
+</aside>
+
+<script src="app.js"></script>
+</body>
+</html>

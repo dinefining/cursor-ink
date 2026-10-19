@@ -1,0 +1,157 @@
+/* Layout: the page is one canvas. The toolbar floats top right in segmented groups.
+   css and info share one dock on the right that pushes the grid over.
+   System: one mono face; 11px for controls, 12px for reading; 28px controls; 1px rules.
+   The serif is only for words people type onto the page. */
+:root {
+  --paper: #e9e7e1;
+  --ink: #2b2a28;
+  --mute: #8e8b84;
+  --line: #d3d0c8;
+  --warn: #a8432a;
+  --focus: #2a3fe6;
+  --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --ui: 11px;
+  --read: 12px;
+  --h: 28px;
+  --gap: 6px;
+  --pad: 14px;
+  --pw: 380px;
+  --edge: 14px;
+  color-scheme: light;
+}
+:root.dark { --paper: #1b1b1a; --ink: #d8d6d0; --mute: #6e6c68; --line: #323130; --warn: #e08a72; --focus: #8ea2ff; color-scheme: dark; }
+[hidden] { display: none !important; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: var(--ui)/1.4 var(--mono);
+  cursor: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+button { font: inherit; color: inherit; }
+
+/* the one control: a segmented group, drawn like e-paper UI.
+   crisp 1px ink frame, dotted (dithered) dividers, a stippled drop shadow,
+   inverted video for anything that is on, stipple on hover. */
+:root { --stip: radial-gradient(var(--ink) .55px, transparent .75px); --grain: none; }
+.seg {
+  position: relative; isolation: isolate;
+  display: inline-flex; flex-wrap: nowrap;
+  border: 1px solid var(--ink);
+  background: var(--paper) var(--grain);
+}
+.seg::after {
+  content: ''; position: absolute; z-index: -1; inset: 3px -4px -4px 3px;
+  background-image: var(--stip); background-size: 3px 3px; opacity: .45; pointer-events: none;
+}
+.seg > button {
+  height: var(--h); padding: 0 10px;
+  border: 0; background: var(--paper) var(--grain); color: var(--ink);
+  font: var(--ui)/1 var(--mono); letter-spacing: .03em;
+  white-space: nowrap; cursor: pointer;
+}
+.seg > button + button { border-left: 1px dotted var(--mute); }
+.seg > button:hover { background-image: var(--stip); background-size: 3px 3px; }
+.seg > button[aria-pressed="true"], .seg > button.primary { background: var(--ink); color: var(--paper); }
+.seg > button .key { display: inline-block; margin-left: .6ch; opacity: .5; }
+.x {
+  position: relative; flex: none; width: var(--h); height: var(--h);
+  border: 1px solid var(--ink); background: var(--paper) var(--grain); color: var(--ink);
+  font: 14px/1 var(--mono); cursor: pointer;
+}
+.x:hover { background-image: var(--stip); background-size: 3px 3px; }
+.seg > button:focus-visible, .x:focus-visible { outline: 1px dashed var(--ink); outline-offset: 2px; position: relative; z-index: 1; }
+
+/* one corner button: ☰ opens the controls; × closes whatever is open. it never moves. */
+#corner {
+  position: fixed; z-index: 30;
+  top: max(var(--edge), env(safe-area-inset-top, 0px)); right: max(var(--edge), env(safe-area-inset-right, 0px));
+}
+.burger { display: block; width: 12px; height: 9px; margin: auto; background: linear-gradient(var(--ink) 0 0) 0 0 / 100% 1px no-repeat, linear-gradient(var(--ink) 0 0) 0 4px / 100% 1px no-repeat, linear-gradient(var(--ink) 0 0) 0 8px / 100% 1px no-repeat; }
+#view {
+  position: fixed; z-index: 25;
+  top: calc(max(var(--edge), env(safe-area-inset-top, 0px)) + var(--h) + 10px); right: max(var(--edge), env(safe-area-inset-right, 0px));
+  width: 176px; isolation: isolate;
+  display: flex; flex-direction: column;
+  border: 1px solid var(--ink); background: var(--paper) var(--grain);
+  cursor: default;
+}
+#view::after {
+  content: ''; position: absolute; z-index: -1; inset: 3px -4px -4px 3px;
+  background-image: var(--stip); background-size: 3px 3px; opacity: .45; pointer-events: none;
+}
+#view .seg { display: flex; flex-direction: column; border: 0; background: none; }
+#view .seg::after { display: none; }
+#view .seg + .seg { border-top: 1px dotted var(--mute); }
+#view .seg > button { display: flex; align-items: center; justify-content: space-between; width: 100%; height: var(--h); padding: 0 12px; text-align: left; }
+#view .seg > button + button { border-left: 0; }
+#view .seg > button .key { margin-left: 12px; }
+#view .row { display: flex; align-items: center; justify-content: space-between; height: var(--h); padding: 0 6px 0 12px; font: var(--ui)/1 var(--mono); color: var(--ink); }
+#view .pm { display: inline-flex; gap: 4px; }
+#view .pm button { width: 26px; height: 20px; padding: 0; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); font: 13px/1 var(--mono); cursor: pointer; }
+#view .pm button:hover { background-image: var(--stip); background-size: 3px 3px; }
+#view .pm button:active { background: var(--ink); color: var(--paper); }
+
+#c { position: fixed; left: 0; top: 0; image-rendering: pixelated; image-rendering: crisp-edges; transition: transform .2s ease-out; }
+@media (prefers-reduced-motion: reduce) { #c { transition: none; } }
+#ring { position: fixed; left: 0; top: 0; border: 1.5px solid var(--ink); pointer-events: none; }
+#ring2 { position: fixed; left: 0; top: 0; border: 1px dashed var(--ink); pointer-events: none; }
+#ring.circle, #ring2.circle { border-radius: 50%; }
+#hold { position: fixed; left: 0; top: 0; border-radius: 50%; box-shadow: 0 0 0 1px var(--paper), 0 0 0 2px var(--ink); pointer-events: none; }
+#typer { position: fixed; left: -9999px; top: 0; width: 10px; height: 10px; opacity: 0; user-select: text; -webkit-user-select: text; }
+
+/* the dock: css and info */
+.dock {
+  position: fixed; z-index: 10; top: 0; right: 0; bottom: 0;
+  width: var(--pw); box-sizing: border-box;
+  display: flex; flex-direction: column;
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--paper) var(--grain); border-left: 1px solid var(--ink);
+  cursor: auto; user-select: text; -webkit-user-select: text;
+}
+.dock header { display: flex; flex-direction: column; gap: 14px; padding: var(--edge) calc(var(--edge) + var(--h) + 12px) 16px var(--edge); border-bottom: 1px dotted var(--mute); }
+.dock .top { display: flex; align-items: center; justify-content: space-between; gap: var(--gap); min-height: var(--h); }
+.dock .top strong { font-weight: 700; letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dock header .seg { align-self: flex-start; max-width: 100%; flex-wrap: wrap; }
+.dock .foot { padding: 8px var(--edge); border-top: 1px dotted var(--mute); font-size: 10px; color: var(--mute); }
+.dock .foot.err { color: var(--warn); }
+
+#css {
+  flex: 1; resize: none; margin: 0; padding: var(--pad) var(--edge);
+  border: 0; outline: none;
+  font: var(--read)/1.65 var(--mono);
+  color: var(--ink); background: transparent;
+  tab-size: 2; white-space: pre-wrap;
+}
+#css[readonly] { font-size: var(--ui); color: var(--mute); }
+#css:focus-visible { box-shadow: inset 2px 0 0 var(--focus); }
+
+.index { display: flex; flex-wrap: wrap; gap: 2px 14px; }
+.index button { padding: 2px 0; border: 0; background: none; color: var(--mute); font: var(--ui)/1.6 var(--mono); cursor: pointer; white-space: nowrap; }
+.index button:hover { color: var(--ink); }
+.index button[aria-current="true"], .index button[aria-pressed="true"] { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.index button.primary { color: var(--ink); font-weight: 700; }
+.index button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+#wbody { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 0 var(--edge) var(--edge); font: var(--read)/1.7 var(--mono); }
+#wbody section { padding-top: 6px; }
+#wbody h2 { font: 700 var(--ui)/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; margin: 18px 0 10px; }
+#wbody h3 { font: 700 var(--read)/1.4 var(--mono); margin: 20px 0 6px; }
+#wbody h3 span, #wbody .note { color: var(--mute); font-weight: 400; }
+#wbody p, #wbody ol { margin: 0 0 12px; }
+#wbody ol { padding-left: 20px; }
+#wbody .lede { font-size: 13px; line-height: 1.65; }
+#wbody code { font: inherit; }
+#wbody pre { margin: 8px 0 14px; padding: 10px 12px; overflow-x: auto; border: 1px dotted var(--mute); font: var(--ui)/1.6 var(--mono); }
+#wbody dl { display: grid; grid-template-columns: minmax(0, 9em) minmax(0, 1fr); gap: 6px 14px; margin: 0 0 12px; }
+#wbody dt { overflow-wrap: anywhere; }
+#wbody dt { font-weight: 700; }
+#wbody dd { margin: 0; min-width: 0; }
+#wbody dd code { color: var(--mute); font-size: var(--ui); }
+#wbody a { color: var(--ink); }
+#wbody .credit { margin: 28px 0 0; padding-top: 14px; border-top: 1px dotted var(--mute); }
+@media (max-width: 480px) { #wbody dl { grid-template-columns: 1fr; gap: 0; } #wbody dd { margin-bottom: 8px; } }
