@@ -1,0 +1,25 @@
+/* a Petri recipe. blocks run top to bottom.
+   load it with pipeline(canvas, recipe), or paste it into the css panel. */
+
+.cursor {
+  --radius: 70;
+  --shape: circle;
+}
+
+.automata {
+  --rule: B3/S23;
+}
+
+.termites {
+  --count: 150;
+}
+
+.mask {
+  --only: ink;
+}
+
+.kaleido {
+  --folds: 6;
+  --ink: crimson;
+  --paper: auto;
+}
