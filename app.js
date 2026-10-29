@@ -18,7 +18,7 @@ function createPipeline(W, H) {
   const INKS = [PINK, COBALT, VERM, YELLOW, GREEN];
   /* theme: in dark mode ink is light and paper is dark; dk() measures lightness relative to the paper */
   let DARK = false, inkL = 40, paperL = 230;
-  const INK0 = [43, 42, 40], PAPER0 = [233, 231, 225], INKD = [216, 214, 208], PAPERD = [27, 27, 26];
+  const INK0 = [43, 42, 40], PAPER0 = [233, 231, 225], INKD = [216, 214, 208], PAPERD = [22, 22, 21];
   function setTheme(d) {
     DARK = d;
     const a = d ? INKD : INK0, b = d ? PAPERD : PAPER0;
@@ -1834,9 +1834,9 @@ function createPipeline(W, H) {
 
 /* ================================================================
    EXPORT ADAPTER. Shipped with the engine: runs effects on any
-   <img>, <video> or <canvas> marked data-petri.
+   <img>, <video> or <canvas> marked data-cursor-ink.
    ================================================================ */
-function petriAdapter(CONFIG, createPipeline) {
+function inkAdapter(CONFIG, createPipeline) {
   const attach = el => {
     const cvs = document.createElement('canvas');
     cvs.style.cssText = 'position:absolute;pointer-events:none;z-index:2147483646;image-rendering:pixelated';
@@ -1857,7 +1857,7 @@ function petriAdapter(CONFIG, createPipeline) {
       }
       if (moving || fresh) {
         try { octx.drawImage(el, 0, 0, W, H); eng.page.set(octx.getImageData(0, 0, W, H).data); fresh = false; }
-        catch (err) { console.warn('petri: cannot read this element\'s pixels (cross-origin?)', el); return; }
+        catch (err) { console.warn('cursor ink: cannot read this element\'s pixels (cross-origin?)', el); return; }
       }
       const x = mx - r.left, y = my - r.top;
       eng.frame(stack, x, y, { R: CONFIG.radius, aspect: CONFIG.aspect, shape: CONFIG.shape, active: x >= 0 && y >= 0 && x < r.width && y < r.height });
@@ -1866,7 +1866,7 @@ function petriAdapter(CONFIG, createPipeline) {
     };
     requestAnimationFrame(tick);
   };
-  const go = () => document.querySelectorAll('[data-petri]').forEach(el => {
+  const go = () => document.querySelectorAll('[data-cursor-ink]').forEach(el => {
     if (el.tagName === 'IMG' && !el.complete) el.addEventListener('load', () => attach(el), { once: true });
     else attach(el);
   });
@@ -1957,7 +1957,7 @@ function pipelineFactory(createPipeline, parseRecipe) {
       const loop = () => {
         if (!alive) return;
         try { api.frame(live || first ? el : null, { x, y }); first = false; }
-        catch (err) { console.warn('petri: cannot read this element (cross-origin?)', err); return; }
+        catch (err) { console.warn('cursor ink: cannot read this element (cross-origin?)', err); return; }
         requestAnimationFrame(loop);
       };
       requestAnimationFrame(loop);
@@ -1988,14 +1988,13 @@ const advBtn = document.getElementById('adv'), lockBtn = document.getElementById
 const copyBtn = document.getElementById('copy'), titleEl = document.getElementById('ptitle');
 
 let defs = [], texts = [], liveDefs = {};
-try { defs = JSON.parse(localStorage.getItem('petri-defs') || localStorage.getItem('cursor-pipeline-defs') || '[]'); } catch (e) { defs = []; }
-try { localStorage.removeItem('cursor-pipeline-text'); localStorage.removeItem('petri-text'); } catch (e) {}
-const saveDefs = () => { try { localStorage.setItem('petri-defs', JSON.stringify(defs)); } catch (e) {} };
+try { defs = JSON.parse(localStorage.getItem('cursor-ink-defs') || '[]'); } catch (e) { defs = []; }
+const saveDefs = () => { try { localStorage.setItem('cursor-ink-defs', JSON.stringify(defs)); } catch (e) {} };
 const saveTexts = () => {};  // words live only for this visit
 let writing = false, activeText = -1, textSize = 40;
 let customs = [];
-try { customs = JSON.parse(localStorage.getItem('petri-customs') || localStorage.getItem('cursor-pipeline-customs') || '[]'); } catch (e) { customs = []; }
-const saveCustoms = () => { try { localStorage.setItem('petri-customs', JSON.stringify(customs)); } catch (e) {} };
+try { customs = JSON.parse(localStorage.getItem('cursor-ink-customs') || '[]'); } catch (e) { customs = []; }
+const saveCustoms = () => { try { localStorage.setItem('cursor-ink-customs', JSON.stringify(customs)); } catch (e) {} };
 
 let panX = 0, dockW = 0;
 function setPan(v) { panX = Math.max(0, Math.min((panelOpen || infoOpen) ? dockW : 0, v)); cvs.style.transform = panX ? 'translateX(' + (-panX) + 'px)' : ''; }
@@ -2163,7 +2162,7 @@ function renderPage() {
 
 function theme() {
   return dark
-    ? { paper: '#1b1b1a', ink: '#d8d6d0', line: '#323130', mute: '#6e6c68', invMute: 'rgba(27,27,26,.55)', inkRGB: [216, 214, 208], paperRGB: [27, 27, 26] }
+    ? { paper: '#161615', ink: '#d8d6d0', line: '#323130', mute: '#6e6c68', invMute: 'rgba(22,22,21,.55)', inkRGB: [216, 214, 208], paperRGB: [22, 22, 21] }
     : { paper: '#e9e7e1', ink: '#2b2a28', line: '#d3d0c8', mute: '#8e8b84', invMute: 'rgba(233,231,225,.6)', inkRGB: [43, 42, 40], paperRGB: [233, 231, 225] };
 }
 function applyView() {
@@ -2306,7 +2305,7 @@ function effectsHtml() {
 function wikiHtml() {
   const S2 = [
     ['start', 'Start', `
-      <p class="lede">Petri is a growing lab of living effects. Every square in the grid holds one. Your cursor is the lens, the petri dish: hover a square and the dish takes on its effect, click and it sticks. Stuck effects run together, top to bottom, on whatever is under the lens: this page’s paper, lines and type, words you write, an image or a video.</p>
+      <p class="lede">Cursor Ink is a growing lab of living effects. Every square in the grid holds one. Your cursor is the lens: hover a square and the lens takes on its effect, click and it sticks. Stuck effects run together, top to bottom, on whatever is under the lens: this page’s paper, lines and type, words you write, an image or a video.</p>
       <ol><li><b>Hover</b> to try an effect.</li><li><b>Click</b> to stick it. Click more to stack them. The order you click is the order they run.</li><li><b>Scroll</b> to resize the lens (pinch on a phone). Click a stuck square again to drop it.</li></ol>
       <p>Squares come in eight families. Six of them, automata, creatures, growth, flow, lens and mark, are things you can also invent yourself. Try <b>automata</b>, then <b>termites</b>, then press <b>f</b> to freeze.</p>`],
     ['toolbar', 'Toolbar', `<p>The button in the top-right corner opens the controls. While anything is open it turns into × and closes it. Every control shows its key on the right. Closing info or css brings the controls back if they were open. Info and css open over the grid without resizing it; scroll sideways to slide the page out from under them.</p><dl>
@@ -2428,10 +2427,10 @@ function wikiHtml() {
       <p>Your stack becomes a ★ square at the end of the grid. Each invention gets its own square under <b>yours</b>. <b>lock</b> in the css panel saves the current stack as a ★ square the same way. Right-click a ★ or yours square to delete it. Squares and inventions are kept in this browser. Words you type last only for the visit.</p>`],
     ['library', 'Library', `
       <p>Export (in the css panel) gives you three things:</p><dl>
-      <dt>module</dt><dd><code>petri.js</code>, an ES module with every effect and the engine. Use it in your own projects.</dd>
+      <dt>module</dt><dd><code>cursor-ink.js</code>, an ES module with every effect and the engine. Use it in your own projects.</dd>
       <dt>recipe</dt><dd>Your stack as a <code>.css</code> file. The module reads it, and you can paste it back into the panel.</dd>
-      <dt>embed</dt><dd>One paste-in script for a plain website: mark any image, video or canvas with <code>data-petri</code>.</dd></dl>
-      <h3>Any page</h3>${code(`import pipeline from './petri.js'
+      <dt>embed</dt><dd>One paste-in script for a plain website: mark any image, video or canvas with <code>data-cursor-ink</code>.</dd></dl>
+      <h3>Any page</h3>${code(`import pipeline from './cursor-ink.js'
 
 const recipe = await (await fetch('garden.css')).text()
 const fx = pipeline(document.querySelector('canvas'), recipe)
@@ -2694,15 +2693,15 @@ function exportCode() {
     stack: stuck.map(s => Object.assign({ effect: eng.EFFECTS[s.eff].name }, s.p)),
     defs: [...new Set(stuck.map(s => eng.EFFECTS[s.eff]).filter(e => e.custom).map(e => e.name))].map(n => ({ kind: eng.EFFECTS[eng.BY_NAME[n]].custom, name: n, spec: specOf(n) })),
   };
-  return '/* Petri export\n'
+  return '/* Cursor Ink export\n'
     + '   1. Paste this in a <script> before </body>.\n'
-    + '   2. Add data-petri to any <img>, <video> or <canvas>.\n'
+    + '   2. Add data-cursor-ink to any <img>, <video> or <canvas>.\n'
     + '   Images must come from your own domain (or send CORS headers),\n'
     + '   otherwise the browser will not let the script read their pixels. */\n'
     + '(() => {\n'
     + 'const CONFIG = ' + JSON.stringify(cfg, null, 2) + ';\n'
     + 'const createPipeline = ' + createPipeline.toString() + ';\n'
-    + '(' + petriAdapter.toString() + ')(CONFIG, createPipeline);\n'
+    + '(' + inkAdapter.toString() + ')(CONFIG, createPipeline);\n'
     + '})();\n';
 }
 let creating = false, beforeCreate = null, squareName = '';
@@ -2794,8 +2793,8 @@ let exportMode = 'module';
 const exTabs = { module: document.getElementById('exModule'), recipe: document.getElementById('exRecipe'), embed: document.getElementById('exEmbed') };
 function moduleCode() {
   const name = (squareName || 'my-recipe').replace(/\s+/g, '-').toLowerCase();
-  return '/* petri.js, an ES module.\n\n'
-    + '   import pipeline from \'./petri.js\'\n\n'
+  return '/* cursor-ink.js, an ES module.\n\n'
+    + '   import pipeline from \'./cursor-ink.js\'\n\n'
     + '   const recipe = await (await fetch(\'' + name + '.css\')).text()   // the recipe tab\n'
     + '   const fx = pipeline(canvas, recipe)\n\n'
     + '   // drive it yourself, every frame. source can be an image, video,\n'
@@ -2816,16 +2815,16 @@ function moduleCode() {
     + 'export { pipeline, parseRecipe, createPipeline };\nexport default pipeline;\n';
 }
 function recipeCode() {
-  return '/* a Petri recipe. load it with pipeline(canvas, recipe),\n   or paste it into the css panel. */\n\n' + cssText().replace(/^\/\*[\s\S]*?\*\/\s*/, '');
+  return '/* a Cursor Ink recipe. load it with pipeline(canvas, recipe),\n   or paste it into the css panel. */\n\n' + cssText().replace(/^\/\*[\s\S]*?\*\/\s*/, '');
 }
 function showExport(mode) {
   exportMode = mode;
   for (const k in exTabs) exTabs[k].setAttribute('aria-pressed', k === mode);
-  titleEl.textContent = mode === 'module' ? 'petri.js' : mode === 'recipe' ? 'recipe.css' : 'embed.js';
+  titleEl.textContent = mode === 'module' ? 'cursor-ink.js' : mode === 'recipe' ? 'recipe.css' : 'embed.js';
   cssEl.value = mode === 'module' ? moduleCode() : mode === 'recipe' ? recipeCode() : exportCode();
   setStatus(mode === 'module' ? 'the library: an ES module for your own projects. pair it with the recipe.'
     : mode === 'recipe' ? 'your stack as a file. load it with the module, or paste it back into css.'
-    : 'one paste-in script: add data-petri to an <img>, <video> or <canvas>.');
+    : 'one paste-in script: add data-cursor-ink to an <img>, <video> or <canvas>.');
 }
 function setExporting(on) {
   if (on && !stuck.length) { setStatus('stick at least one effect to export it', true); return; }

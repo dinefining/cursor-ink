@@ -19,7 +19,7 @@
   --edge: 14px;
   color-scheme: light;
 }
-:root.dark { --paper: #1b1b1a; --ink: #d8d6d0; --mute: #6e6c68; --line: #323130; --warn: #e08a72; --focus: #8ea2ff; color-scheme: dark; }
+:root.dark { --paper: #161615; --ink: #d8d6d0; --mute: #6e6c68; --line: #323130; --warn: #e08a72; --focus: #8ea2ff; color-scheme: dark; }
 [hidden] { display: none !important; }
 html, body { height: 100%; overflow: hidden; }
 body {
