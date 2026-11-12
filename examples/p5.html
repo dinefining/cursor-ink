@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cursor Ink, p5 example</title>
+<style>
+  html, body { margin: 0; background: #e9e7e1; }
+  canvas { display: block; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+</head>
+<body>
+<script>
+// your stack, exactly as the css panel's recipe tab gives it
+const recipe = `
+.cursor { --radius: 60; }
+.worms { --count: 6; --length: 40; }
+.wildfire { --grow: 0.004; --spread: 0.8; }
+`
+
+let pg, fx, pipeline
+import('../cursor-ink.js').then(m => { pipeline = m.default })
+
+function setup() {
+  pixelDensity(1)              // Cursor Ink works in real pixels, so keep p5 at 1:1
+  createCanvas(600, 400)
+  pg = createGraphics(width, height)
+  pg.pixelDensity(1)
+}
+
+function draw() {
+  // 1. draw your sketch into pg, not onto the main canvas
+  pg.background(233, 231, 225)
+  pg.noStroke(); pg.fill(43, 42, 40)
+  pg.circle(width / 2 + sin(frameCount * .02) * 150, height / 2, 120)
+  pg.textSize(64); pg.text('p5', 40, 90)
+
+  // 2. Cursor Ink reads pg and draws the result onto the main canvas
+  if (!pipeline) return
+  fx = fx || pipeline(drawingContext.canvas, recipe)
+  const over = mouseX >= 0 && mouseY >= 0 && mouseX < width && mouseY < height
+  fx.frame(pg.elt, over ? { x: mouseX, y: mouseY } : {})
+}
+</script>
+</body>
+</html>
