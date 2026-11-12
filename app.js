@@ -2000,7 +2000,7 @@ let panX = 0, dockW = 0;
 function setPan(v) { panX = Math.max(0, Math.min((panelOpen || infoOpen) ? dockW : 0, v)); cvs.style.transform = panX ? 'translateX(' + (-panX) + 'px)' : ''; }
 let eng, imgData, S = 1, W = 0, H = 0, gw, gh, cols, rows, cw, ch, page0, pctx;
 let tiles = [], hoverTile = -1, inside = false, panelOpen = false, infoOpen = false;
-let showLines = false, showLabels = false, dark = !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+let showLines = true, showLabels = true, dark = !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
 let freeze = false, solo = false, keep = false, advanced = false, exporting = false, lensShape = 'circle', baseImg = null;
 let mx = innerWidth / 2, my = innerHeight / 2, R = 40;
 let stuck = [];
